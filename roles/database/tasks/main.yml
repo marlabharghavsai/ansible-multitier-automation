@@ -1,0 +1,57 @@
+---
+- name: Install PostgreSQL and Python dependencies
+  apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - python3-psycopg2
+    state: present
+    update_cache: yes
+
+- name: Ensure PostgreSQL is started and enabled
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: Create application database
+  community.postgresql.postgresql_db:
+    name: "{{ app_db_name }}"
+    state: present
+  become_user: postgres
+
+- name: Create database user
+  community.postgresql.postgresql_user:
+    name: "{{ app_db_user }}"
+    password: "{{ vault_db_password }}"
+    db: "{{ app_db_name }}"
+    priv: "ALL"
+  become_user: postgres
+
+- name: Find postgresql.conf path
+  find:
+    paths: /etc/postgresql
+    patterns: postgresql.conf
+    recurse: yes
+  register: pg_conf_file
+
+- name: Configure PostgreSQL listen addresses
+  lineinfile:
+    path: "{{ pg_conf_file.files[0].path }}"
+    regexp: '^#?listen_addresses'
+    line: "listen_addresses = '*'"
+  notify: restart postgresql
+
+- name: Find pg_hba.conf path
+  find:
+    paths: /etc/postgresql
+    patterns: pg_hba.conf
+    recurse: yes
+  register: pg_hba_file
+
+- name: Configure pg_hba.conf to allow app servers
+  lineinfile:
+    path: "{{ pg_hba_file.files[0].path }}"
+    regexp: "^host\\s+all\\s+all\\s+{{ hostvars[groups['appservers'][0]]['ansible_host'] }}/32"
+    line: "host    all             all             {{ hostvars[groups['appservers'][0]]['ansible_host'] }}/32            md5"
+  notify: restart postgresql
