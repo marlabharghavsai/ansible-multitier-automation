@@ -1,0 +1,5 @@
+---
+app_db_name: "myappdb"
+app_db_user: "myappuser"
+app_port: 3000
+server_domain_or_ip: "_"
