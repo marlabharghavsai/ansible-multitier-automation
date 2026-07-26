@@ -1,0 +1,51 @@
+---
+- name: Install Node.js and npm
+  apt:
+    name:
+      - nodejs
+      - npm
+    state: present
+    update_cache: yes
+
+- name: Ensure /var/www/app directory exists
+  file:
+    path: /var/www/app
+    state: directory
+    owner: ubuntu
+    group: ubuntu
+    mode: '0755'
+
+- name: Clone application repository
+  git:
+    repo: "https://github.com/johnpapa/node-hello.git"
+    dest: /var/www/app
+    version: master
+    force: yes
+  become_user: ubuntu
+
+- name: Install NPM dependencies
+  npm:
+    path: /var/www/app
+  become_user: ubuntu
+
+- name: Configure environment variables
+  template:
+    src: env.j2
+    dest: /var/www/app/.env
+    owner: ubuntu
+    group: ubuntu
+    mode: '0600'
+  notify: restart application
+
+- name: Configure systemd service
+  template:
+    src: myapp.service.j2
+    dest: /etc/systemd/system/myapp.service
+  notify: restart application
+
+- name: Ensure application is started and enabled
+  systemd:
+    name: myapp
+    state: started
+    enabled: yes
+    daemon_reload: yes
