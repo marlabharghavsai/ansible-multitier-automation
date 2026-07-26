@@ -1,0 +1,21 @@
+---
+- name: Ensure base packages are installed
+  apt:
+    name:
+      - curl
+      - git
+      - htop
+      - ufw
+    state: present
+    update_cache: yes
+
+- name: Allow SSH traffic
+  ufw:
+    rule: allow
+    port: '22'
+    proto: tcp
+
+- name: Enable UFW firewall
+  ufw:
+    state: enabled
+    policy: deny
