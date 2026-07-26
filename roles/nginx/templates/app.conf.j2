@@ -1,0 +1,10 @@
+server {
+    listen 80;
+    server_name {{ server_domain_or_ip }};
+
+    location / {
+        proxy_pass http://{{ hostvars[groups['appservers'][0]]['ansible_host'] }}:{{ app_port }};
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
