@@ -1,0 +1,35 @@
+---
+- name: Base server configuration and hardening
+  hosts: all
+  become: yes
+  tags: ['common', 'setup']
+  roles:
+    - common
+
+- name: Configure Cache Servers
+  hosts: cacheservers
+  become: yes
+  tags: ['cache']
+  roles:
+    - cache
+
+- name: Configure Database Servers
+  hosts: dbservers
+  become: yes
+  tags: ['database']
+  roles:
+    - database
+
+- name: Configure App Servers
+  hosts: appservers
+  become: yes
+  tags: ['app', 'deploy']
+  roles:
+    - app
+
+- name: Configure Web Servers
+  hosts: webservers
+  become: yes
+  tags: ['web', 'nginx']
+  roles:
+    - nginx
